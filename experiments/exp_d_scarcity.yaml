@@ -1,0 +1,8 @@
+name: exp_d_scarcity
+seed: 42
+ticks: 1500
+description: "Experiment D - scarce food increases survival pressure"
+hypothesis: "Scarcity lowers population size and shifts traits relative to Experiment C."
+resources: {initial_count: 80, regeneration_rate: 0.008}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+brain: {type: rule}

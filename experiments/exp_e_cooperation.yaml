@@ -1,0 +1,9 @@
+name: exp_e_cooperation
+seed: 42
+ticks: 1500
+description: "Experiment E - resource sharing allowed, kin visible"
+hypothesis: "When sharing is possible and kin are recognisable, cooperation_tendency is maintained or increases."
+resources: {initial_count: 150, regeneration_rate: 0.015}
+actions: {share_enabled: true, kin_recognition: true}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+brain: {type: rule}

@@ -1,0 +1,9 @@
+name: exp_a_no_evolution
+seed: 42
+ticks: 1000
+description: "Experiment A - identical fixed genome for all founders, no mutation (baseline)"
+hypothesis: "Without heritable variation, trait means and genome diversity stay constant; only population size changes."
+population: {initial_genome: fixed, fixed_genome: {}}
+resources: {initial_count: 150, regeneration_rate: 0.015}
+evolution: {mutation_enabled: false}
+brain: {type: rule}

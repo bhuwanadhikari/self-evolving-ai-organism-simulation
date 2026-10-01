@@ -1,0 +1,14 @@
+name: env7_adaptive
+seed: 42
+ticks: 1500
+description: "Env 7 - overharvested cells lose fertility; crowding creates local hazard"
+hypothesis: "Depletion feedback produces boom-bust population cycles and favours dispersal (exploration)."
+resources: {initial_count: 200, regeneration_rate: 0.03}
+adaptive:
+  enabled: true
+  depletion_per_harvest: 0.05
+  fertility_recovery: 0.002
+  min_fertility: 0.1
+  crowding_threshold: 3
+  crowding_hazard: 0.3
+brain: {type: rule}

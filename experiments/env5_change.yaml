@@ -1,0 +1,14 @@
+name: env5_change
+seed: 42
+ticks: 1500
+description: "Env 5 - food hotspots and hazard zones periodically relocate"
+hypothesis: "Periodic change keeps trait diversity higher than in static environments."
+resources:
+  initial_count: 150
+  regeneration_rate: 0.06
+  distribution: hotspots
+  hotspot_count: 3
+  hotspot_radius: 3
+  relocate_every: 150
+hazards: {zone_count: 3, zone_radius: 2.0, damage: 12, relocate_every: 200}
+brain: {type: rule}

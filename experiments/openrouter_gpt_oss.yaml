@@ -1,0 +1,36 @@
+# Same milestone as qwen_first20.yaml, but driven by gpt-oss-120b via
+# OpenRouter instead of a local Ollama model.
+# Requires OPENROUTER_API_KEY set in the environment or in a local .env file
+# (see .env.example).
+name: openrouter_gpt_oss
+seed: 42
+ticks: 200
+description: "20 organisms controlled by gpt-oss-120b via OpenRouter; limited food; asexual reproduction with mutation"
+hypothesis: "Exploratory: record which behaviours appear and whether reproduction occurs without being instructed."
+population: {initial_size: 20, max_population: 60}
+world: {width: 20, height: 20}
+resources: {initial_count: 150, regeneration_rate: 0.02}
+organism: {max_age: 300}
+reproduction: {cost: 60, offspring_energy: 40, min_energy: 80, min_age: 10}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+communication: {enabled: true, max_length: 80, range: 3}
+memory: {short_term_capacity: 8, long_term_capacity: 12, retrieval_count: 8}
+brain:
+  type: qwen
+  backend: openai
+  model: "openai/gpt-oss-120b"
+  endpoint: "https://openrouter.ai/api"
+  allow_remote_endpoint: true
+  api_key_env: "OPENROUTER_API_KEY"
+  temperature: 0.7
+  max_tokens: 500       # headroom for hidden reasoning + the JSON answer
+  reasoning_effort: "low"  # gpt-oss cannot fully disable reasoning; this caps it
+  concurrency: 4
+  reveal_mechanics: false
+  log_prompts: true  # so the per-run transcript.html includes full prompts, not just responses
+  decision:
+    every_tick: false        # re-use the last action until something changes
+    max_interval: 5
+    energy_change_threshold: 15
+    health_change_threshold: 10
+logging: {snapshot_every: 2, checkpoint_every: 20, print_every: 5}

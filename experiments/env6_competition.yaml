@@ -1,0 +1,8 @@
+name: env6_competition
+seed: 42
+ticks: 1500
+description: "Env 6 - many founder lineages compete for scarce food"
+hypothesis: "Most founder lineages go extinct; one or a few lineages come to dominate."
+population: {initial_size: 40, max_population: 200}
+resources: {initial_count: 150, regeneration_rate: 0.012}
+brain: {type: rule}

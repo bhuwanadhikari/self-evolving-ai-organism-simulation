@@ -1,0 +1,8 @@
+name: env4_hazards
+seed: 42
+ticks: 1000
+description: "Env 4 - static hazard zones damage health"
+hypothesis: "Risk tolerance decreases over generations when hazards are present."
+resources: {initial_count: 150, regeneration_rate: 0.02}
+hazards: {zone_count: 4, zone_radius: 2.0, max_level: 1.0, damage: 12}
+brain: {type: rule}

@@ -1,0 +1,14 @@
+name: env3_moving
+seed: 42
+ticks: 1000
+description: "Env 3 - food regenerates around hotspots that drift over time"
+hypothesis: "Drifting food favours higher exploration_rate than static environments."
+resources:
+  initial_count: 150
+  regeneration_rate: 0.06
+  distribution: hotspots
+  hotspot_count: 3
+  hotspot_radius: 2.5
+  hotspot_floor: 0.02
+  drift_every: 5
+brain: {type: rule}

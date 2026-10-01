@@ -1,0 +1,9 @@
+name: exp_f_competition
+seed: 42
+ticks: 1500
+description: "Experiment F - scarce food, attack and sharing both possible"
+hypothesis: "Under scarcity with attack available, aggression_tendency increases relative to Experiment E."
+resources: {initial_count: 80, regeneration_rate: 0.01}
+actions: {share_enabled: true, attack_enabled: true, attack_damage: 15, attack_steal_fraction: 0.3}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+brain: {type: rule}

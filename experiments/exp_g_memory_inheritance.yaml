@@ -1,0 +1,16 @@
+# Compare modes with: --set memory.inheritance_mode=none|selected|compressed|genome_only
+name: exp_g_memory_inheritance
+seed: 42
+ticks: 1500
+description: "Experiment G - offspring inherit selected parental memories (cultural transmission)"
+hypothesis: "Inherited memories of food locations raise early-life survival compared with inheritance_mode=none."
+resources:
+  initial_count: 150
+  regeneration_rate: 0.04
+  distribution: hotspots
+  hotspot_count: 3
+  hotspot_radius: 2.5
+  relocate_every: 300
+memory: {inheritance_mode: selected, inherit_count: 5, long_term_capacity: 20}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+brain: {type: rule}

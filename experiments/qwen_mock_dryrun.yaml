@@ -1,0 +1,29 @@
+# Dry run of the full Qwen prompt/parse pipeline without a model (answers come from RuleBrain).
+name: qwen_mock
+seed: 42
+ticks: 100
+description: "Dry run of the Qwen pipeline with the mock backend (no model needed)"
+hypothesis: "Exploratory: record which behaviours appear and whether reproduction occurs without being instructed."
+population: {initial_size: 20, max_population: 60}
+world: {width: 20, height: 20}
+resources: {initial_count: 150, regeneration_rate: 0.02}
+organism: {max_age: 300}
+reproduction: {cost: 60, offspring_energy: 40, min_energy: 80, min_age: 10}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+communication: {enabled: true, max_length: 80, range: 3}
+memory: {short_term_capacity: 8, long_term_capacity: 12, retrieval_count: 8}
+brain:
+  type: qwen
+  backend: mock
+  model: "qwen2.5:7b-instruct"
+  endpoint: "http://localhost:11434"
+  temperature: 0.7
+  max_tokens: 120
+  concurrency: 4
+  reveal_mechanics: false
+  decision:
+    every_tick: false        # re-use the last action until something changes
+    max_interval: 5
+    energy_change_threshold: 15
+    health_change_threshold: 10
+logging: {snapshot_every: 2, checkpoint_every: 20, print_every: 5}

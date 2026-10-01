@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artificial Life Run</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2; --surface: #fcfcfb; --border: #e3e1dc;
+  --text: #0b0b0b; --text2: #52514e; --muted: #8a8984; --grid: #ebe9e4;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7;
+  --other: #b5b3ad; --res: 42,120,214; --haz: 227,73,72; --cell: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #111110; --surface: #1a1a19; --border: #2e2e2c;
+    --text: #ffffff; --text2: #c3c2b7; --muted: #8a8984; --grid: #2a2a28;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9;
+    --other: #6b6a66; --res: 57,135,229; --haz: 230,103,103; --cell: #232322;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111110; --surface: #1a1a19; --border: #2e2e2c;
+  --text: #ffffff; --text2: #c3c2b7; --muted: #8a8984; --grid: #2a2a28;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9;
+  --other: #6b6a66; --res: 57,135,229; --haz: 230,103,103; --cell: #232322;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+h1 { font-size: 20px; margin: 0 0 2px; }
+h2 { font-size: 14px; margin: 0 0 10px; font-weight: 600; }
+.sub { color: var(--text2); margin: 0 0 16px; font-size: 13px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.tile, .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.tile { padding: 10px 12px; }
+.tile .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .k { color: var(--text2); font-size: 12px; }
+.card { padding: 14px; min-width: 0; }
+.row { display: grid; gap: 14px; margin-bottom: 14px; }
+.r2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.world { grid-template-columns: minmax(0, 520px) minmax(0, 1fr); }
+@media (max-width: 860px) { .r2, .world { grid-template-columns: minmax(0, 1fr); } }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.traits { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+canvas { display: block; width: 100%; }
+.ctl { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.ctl input[type=range] { flex: 1; min-width: 120px; }
+button, select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--text2); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: -1px; }
+.chart-title { font-size: 12px; color: var(--text2); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.12); display: none; z-index: 10; white-space: nowrap; }
+.tablewrap { max-height: 360px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--text2); font-weight: 500; position: sticky; top: 0; background: var(--surface); }
+td.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+details summary { cursor: pointer; color: var(--text2); font-size: 12px; }
+pre { font-size: 11px; overflow: auto; max-height: 360px; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Run</h1>
+  <p class="sub" id="subtitle"></p>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="row world">
+    <div class="card">
+      <h2>World</h2>
+      <canvas id="world"></canvas>
+      <div class="ctl">
+        <button id="play">Play</button>
+        <input type="range" id="frame" min="0" value="0">
+        <span id="frameLabel" class="muted"></span>
+      </div>
+      <div class="legend" id="worldLegend"></div>
+    </div>
+    <div class="card">
+      <h2>Population dynamics</h2>
+      <div class="charts" id="charts"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>Genome trait means (band = ±1 std-dev)</h2>
+      <div class="traits" id="traits"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>Lineage tree <span class="muted" style="font-weight:400">(each line is one organism from birth to death; x = tick)</span></h2>
+      <canvas id="tree"></canvas>
+      <div class="legend" id="treeLegend"></div>
+    </div>
+  </div>
+
+  <div class="row r2">
+    <div class="card">
+      <h2>Event timeline</h2>
+      <div class="ctl" style="margin:0 0 8px">
+        <select id="evFilter"></select>
+        <span class="muted" id="evCount"></span>
+      </div>
+      <div class="tablewrap"><table id="events"></table></div>
+    </div>
+    <div class="card">
+      <h2>Communication</h2>
+      <div class="tablewrap"><table id="comms"></table></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <details><summary>Configuration</summary><pre id="config"></pre></details>
+    </div>
+  </div>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = /*__DATA__*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = "block";
+  const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+const fmt = v => typeof v === "number" ? (Math.abs(v) >= 100 || Number.isInteger(v) ? Math.round(v).toLocaleString() : v.toFixed(2)) : v;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---- lineage colors: top 7 lineages by total size keep fixed slots, rest are "other"
+const SLOTS = ["--s1","--s2","--s3","--s4","--s5","--s6","--s7"];
+const lineColor = {};
+DATA.top_lineages.forEach((l, i) => lineColor[l] = SLOTS[i]);
+const lc = l => css(lineColor[l] || "--other");
+function lineageLegend(el) {
+  el.innerHTML = DATA.top_lineages.map(l => `<span style="--c:var(${lineColor[l]})">${l}</span>`).join("") +
+    (DATA.n_lineages > DATA.top_lineages.length ? `<span style="--c:var(--other)">other lineages</span>` : "");
+}
+
+// ---- header
+const M = DATA.meta, S = DATA.summary;
+document.getElementById("title").textContent = M.name;
+document.getElementById("subtitle").textContent =
+  `seed ${M.seed} · brain ${M.brain.name}${M.brain.model ? " (" + M.brain.model + ")" : ""} · sim v${M.simulation_version} · ${S.ticks} ticks` +
+  (M.description ? " · " + M.description : "");
+const tiles = [["Final population", S.final_population], ["Organisms ever", S.organisms_ever],
+  ["Births", S.total_births], ["Deaths", S.total_deaths], ["Max generation", S.max_generation],
+  ["Lineages surviving", Object.keys(S.surviving_lineages).length], ["Brain calls", S.brain_calls]];
+document.getElementById("tiles").innerHTML = tiles.map(([k, v]) =>
+  `<div class="tile"><div class="v">${fmt(v)}</div><div class="k">${k}</div></div>`).join("");
+document.getElementById("config").textContent = JSON.stringify(M.config, null, 2);
+
+// ---- canvas helper
+function setup(canvas, h) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth;
+  canvas.width = w * dpr; canvas.height = h * dpr; canvas.style.height = h + "px";
+  const ctx = canvas.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [ctx, w, h];
+}
+
+// ---- world
+const W = DATA.world, frames = DATA.snapshots;
+const wc = document.getElementById("world"), slider = document.getElementById("frame");
+slider.max = frames.length - 1;
+let frameIdx = 0, playing = null, worldGeom = null;
+function drawWorld() {
+  const f = frames[frameIdx]; if (!f) return;
+  const size = Math.min(wc.clientWidth, 520);
+  const [ctx, w] = setup(wc, size * W.height / W.width);
+  const cs = w / W.width, res = css("--res"), haz = css("--haz");
+  ctx.fillStyle = css("--cell"); ctx.fillRect(0, 0, w, cs * W.height);
+  for (let y = 0; y < W.height; y++) for (let x = 0; x < W.width; x++) {
+    const r = f.resources[y][x], h = f.hazard[y][x];
+    if (r > 0) { ctx.fillStyle = `rgba(${res},${0.15 + 0.7 * r / W.max_per_cell})`; ctx.fillRect(x*cs+1, y*cs+1, cs-2, cs-2); }
+    if (h > 0) { ctx.strokeStyle = `rgba(${haz},${0.3 + 0.7*h})`; ctx.lineWidth = 2; ctx.strokeRect(x*cs+2, y*cs+2, cs-4, cs-4); }
+  }
+  const counts = {};
+  const surface = css("--surface");
+  for (const o of f.organisms) {
+    const k = o.x + "," + o.y, i = counts[k] = (counts[k] || 0) + 1;
+    const off = (i - 1) % 4, ox = (off % 2 ? 0.66 : 0.34), oy = (off > 1 ? 0.66 : 0.34);
+    const rad = Math.max(3, cs * 0.2);
+    ctx.beginPath(); ctx.arc(o.x*cs + cs*(i === 1 ? 0.5 : ox), o.y*cs + cs*(i === 1 ? 0.5 : oy), rad, 0, 7);
+    ctx.fillStyle = lc(o.lineage); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = surface; ctx.stroke();
+  }
+  worldGeom = { cs, f };
+  slider.value = frameIdx;
+  document.getElementById("frameLabel").textContent = `tick ${f.tick} · ${f.organisms.length} alive`;
+}
+slider.oninput = () => { frameIdx = +slider.value; drawWorld(); };
+document.getElementById("play").onclick = e => {
+  if (playing) { clearInterval(playing); playing = null; e.target.textContent = "Play"; return; }
+  if (frameIdx >= frames.length - 1) frameIdx = 0;
+  e.target.textContent = "Pause";
+  playing = setInterval(() => { if (frameIdx >= frames.length - 1) { document.getElementById("play").click(); return; }
+    frameIdx++; drawWorld(); }, 120);
+};
+wc.onmousemove = e => {
+  if (!worldGeom) return; const r = wc.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / worldGeom.cs), y = Math.floor((e.clientY - r.top) / worldGeom.cs);
+  if (x < 0 || y < 0 || x >= W.width || y >= W.height) return hideTip();
+  const f = worldGeom.f, here = f.organisms.filter(o => o.x === x && o.y === y);
+  showTip(e, `<b>(${x}, ${y})</b><br>food ${f.resources[y][x]} · hazard ${f.hazard[y][x]}` +
+    here.map(o => `<br>${o.id} · ${o.lineage} · g${o.generation} · E ${o.energy} · H ${o.health}`).join(""));
+};
+wc.onmouseleave = hideTip;
+lineageLegend(document.getElementById("worldLegend"));
+document.getElementById("worldLegend").insertAdjacentHTML("beforeend",
+  `<span style="--c:rgba(${css("--res")},.7)">food (darker = more)</span><span style="--c:rgba(${css("--haz")},.9)">hazard (outlined cells)</span>`);
+
+// ---- line charts
+const MT = DATA.metrics, ticks = MT.tick;
+function lineChart(el, title, series, opts = {}) {
+  const box = document.createElement("div");
+  box.innerHTML = `<div class="chart-title"><span>${title}</span><span class="val"></span></div><canvas></canvas>` +
+    (series.length > 1 ? `<div class="legend">${series.map(s => `<span style="--c:var(${s.color})">${s.name}</span>`).join("")}</div>` : "");
+  el.appendChild(box);
+  const cv = box.querySelector("canvas"), valEl = box.querySelector(".val");
+  const H = opts.height || 130, pad = { l: 34, r: 6, t: 6, b: 18 };
+  let geom;
+  function draw(hi) {
+    const [ctx, w, h] = setup(cv, H);
+    const all = series.flatMap(s => s.values.concat(s.band ? s.band[1] : []));
+    const ymin = opts.ymin ?? Math.min(0, ...all), ymax = opts.ymax ?? (Math.max(...all) || 1) * 1.05;
+    const xmin = ticks[0] ?? 0, xmax = ticks[ticks.length - 1] ?? 1;
+    const X = t => pad.l + (t - xmin) / ((xmax - xmin) || 1) * (w - pad.l - pad.r);
+    const Y = v => h - pad.b - (v - ymin) / ((ymax - ymin) || 1) * (h - pad.t - pad.b);
+    ctx.font = "10px system-ui"; ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--grid"); ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) { const v = ymin + (ymax - ymin) * i / 3, y = Y(v);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+      ctx.textAlign = "right"; ctx.fillText(ymax - ymin >= 10 ? Math.round(v) : +v.toFixed(2), pad.l - 4, y + 3); }
+    ctx.textAlign = "left"; ctx.fillText(xmin, pad.l, h - 4); ctx.textAlign = "right"; ctx.fillText(xmax, w - pad.r, h - 4);
+    for (const s of series) {
+      const c = css(s.color);
+      if (s.band) { ctx.beginPath(); ticks.forEach((t, i) => ctx.lineTo(X(t), Y(s.band[1][i])));
+        for (let i = ticks.length - 1; i >= 0; i--) ctx.lineTo(X(ticks[i]), Y(s.band[0][i]));
+        ctx.globalAlpha = 0.18; ctx.fillStyle = c; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.beginPath(); ticks.forEach((t, i) => i ? ctx.lineTo(X(t), Y(s.values[i])) : ctx.moveTo(X(t), Y(s.values[i])));
+      ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.stroke();
+    }
+    if (hi != null) { const x = X(ticks[hi]); ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, h - pad.b); ctx.stroke();
+      for (const s of series) { ctx.beginPath(); ctx.arc(x, Y(s.values[hi]), 4, 0, 7); ctx.fillStyle = css(s.color); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = css("--surface"); ctx.stroke(); } }
+    geom = { X, w };
+    const last = ticks.length - 1;
+    valEl.textContent = series.length === 1 && last >= 0 ? fmt(series[0].values[last]) : "";
+  }
+  cv.onmousemove = e => { const r = cv.getBoundingClientRect(), px = e.clientX - r.left;
+    let best = 0, bd = 1e9; ticks.forEach((t, i) => { const d = Math.abs(geom.X(t) - px); if (d < bd) { bd = d; best = i; } });
+    draw(best); showTip(e, `<b>tick ${ticks[best]}</b>` + series.map(s => `<br>${s.name}: ${fmt(s.values[best])}`).join("")); };
+  cv.onmouseleave = () => { draw(); hideTip(); };
+  charts.push(() => draw()); draw();
+}
+const charts = [];
+const C = document.getElementById("charts");
+lineChart(C, "Population", [{ name: "population", values: MT.population, color: "--s1" }]);
+lineChart(C, "Average energy", [{ name: "avg energy", values: MT.avg_energy, color: "--s1" }]);
+const roll = (a, n = 25) => { let acc = 0; return a.map((v, i) => { acc += v; if (i >= n) acc -= a[i - n]; return +(acc / Math.min(i + 1, n)).toFixed(3); }); };
+lineChart(C, "Births and deaths per tick (25-tick average)", [{ name: "births", values: roll(MT.births), color: "--s3" }, { name: "deaths", values: roll(MT.deaths), color: "--s2" }]);
+lineChart(C, "Genome diversity (mean pairwise distance)", [{ name: "diversity", values: MT.genome_diversity, color: "--s1" }]);
+lineChart(C, "Food in world", [{ name: "food units", values: MT.world_resources, color: "--s1" }]);
+lineChart(C, "Lineages alive", [{ name: "lineages", values: MT.lineages_alive, color: "--s1" }]);
+lineChart(C, "Max generation", [{ name: "max generation", values: MT.max_generation, color: "--s1" }]);
+const actKeys = Object.keys(MT).filter(k => k.startsWith("act_") && MT[k].some(v => v > 0));
+const topActs = actKeys.sort((a, b) => MT[b].reduce((x, y) => x + y, 0) - MT[a].reduce((x, y) => x + y, 0)).slice(0, 4);
+lineChart(C, "Actions per tick, top 4 (25-tick average)", topActs.map((k, i) => ({ name: k.slice(4), values: roll(MT[k]), color: SLOTS[i] })));
+
+const T = document.getElementById("traits");
+for (const t of DATA.traits) {
+  const m = MT["trait_" + t], sd = MT["trait_" + t + "_std"];
+  lineChart(T, t.replace(/_/g, " "), [{ name: t, values: m, color: "--s1",
+    band: [m.map((v, i) => Math.max(0, v - sd[i])), m.map((v, i) => Math.min(1, v + sd[i]))] }], { ymin: 0, ymax: 1, height: 100 });
+}
+
+// ---- lineage tree (phylogeny: DFS order, x = time)
+const nodes = DATA.tree, byId = {}, kids = {};
+nodes.forEach(n => { byId[n.id] = n; if (n.p) (kids[n.p] = kids[n.p] || []).push(n.id); });
+const order = [];
+(function () { const roots = nodes.filter(n => !n.p || !byId[n.p]);
+  const stack = roots.map(r => r.id).reverse();
+  while (stack.length) { const id = stack.pop(); order.push(id); (kids[id] || []).slice().reverse().forEach(k => stack.push(k)); } })();
+const rowOf = {}; order.forEach((id, i) => rowOf[id] = i);
+const tc = document.getElementById("tree");
+let treeGeom;
+function drawTree() {
+  const rowH = Math.max(1.5, Math.min(6, 700 / order.length));
+  const [ctx, w, h] = setup(tc, Math.max(120, order.length * rowH + 24));
+  const tmax = S.ticks || 1, pad = 34;
+  const X = t => pad + t / tmax * (w - pad - 8), Y = i => 6 + i * rowH + rowH / 2;
+  ctx.font = "10px system-ui"; ctx.fillStyle = css("--muted");
+  ctx.textAlign = "left"; ctx.fillText("tick 0", pad, h - 4); ctx.textAlign = "right"; ctx.fillText("tick " + tmax, w - 8, h - 4);
+  ctx.lineWidth = Math.max(1, Math.min(2, rowH * 0.6));
+  for (const id of order) { const n = byId[id], c = lc(n.l), y = Y(rowOf[id]);
+    const end = n.d == null ? tmax : n.d;
+    if (n.p && byId[n.p]) { ctx.strokeStyle = c; ctx.globalAlpha = 0.35; ctx.beginPath();
+      ctx.moveTo(X(n.b), Y(rowOf[n.p])); ctx.lineTo(X(n.b), y); ctx.stroke(); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(X(n.b), y); ctx.lineTo(X(Math.max(end, n.b + 0.5)), y); ctx.stroke(); }
+  treeGeom = { Y, rowH };
+}
+tc.onmousemove = e => { const r = tc.getBoundingClientRect(), i = Math.floor((e.clientY - r.top - 6) / treeGeom.rowH);
+  const n = byId[order[i]]; if (!n) return hideTip();
+  showTip(e, `<b>${n.id}</b> · ${n.l} · generation ${n.g}<br>born t${n.b} · ${n.a ? "alive" : `died t${n.d} (${n.c})`}<br>${n.o} offspring` +
+    (n.p ? `<br>parent ${n.p}` : "")); };
+tc.onmouseleave = hideTip;
+lineageLegend(document.getElementById("treeLegend"));
+if (DATA.tree_truncated) document.getElementById("treeLegend").insertAdjacentHTML("beforeend", `<span class="muted">showing first ${nodes.length} organisms</span>`);
+
+// ---- events
+const EV = DATA.events, types = [...new Set(EV.map(e => e.type))].sort();
+const sel = document.getElementById("evFilter");
+sel.innerHTML = `<option value="">all event types</option>` + types.map(t => `<option>${t}</option>`).join("");
+function describe(e) {
+  switch (e.type) {
+    case "birth": return `${e.organism} born to ${e.parents.join(" + ")} (g${e.generation}, ${e.lineage_id})` + (e.mutated_traits.length ? ` · mutated: ${e.mutated_traits.join(", ")}` : "");
+    case "death": return `${e.organism} died (${e.cause}) at age ${e.age}, ${e.offspring} offspring`;
+    case "share": return `${e.from} gave ${e.amount} energy to ${e.to}`;
+    case "attack": return `${e.from} attacked ${e.to}` + (e.stolen ? ` and took ${e.stolen}` : "");
+    case "environment": return e.hotspots ? "food regions relocated" : e.zones ? "hazard zones relocated" : JSON.stringify(e);
+    case "extinction": return "population extinct";
+    default: return JSON.stringify(e);
+  }
+}
+function renderEvents() {
+  const f = sel.value, rows = EV.filter(e => !f || e.type === f).slice(-500).reverse();
+  document.getElementById("evCount").textContent = `${rows.length} shown` + (DATA.events_truncated ? " (latest)" : "");
+  document.getElementById("events").innerHTML = "<tr><th>tick</th><th>type</th><th>event</th></tr>" +
+    rows.map(e => `<tr><td class="num">${e.tick}</td><td>${e.type}</td><td>${esc(describe(e))}</td></tr>`).join("");
+}
+sel.onchange = renderEvents; renderEvents();
+const CM = DATA.comms.slice().reverse();
+document.getElementById("comms").innerHTML = CM.length ? "<tr><th>tick</th><th>from → to</th><th>message received</th></tr>" +
+  CM.map(c => `<tr><td class="num">${c.tick}</td><td>${c.from} → ${c.to}</td><td>${esc(c.message_received)}</td></tr>`).join("")
+  : `<tr><td class="muted">No messages were sent in this run.</td></tr>`;
+
+drawWorld(); drawTree(); charts.forEach(f => f());
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { drawWorld(); drawTree(); charts.forEach(f => f()); }, 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawWorld(); drawTree(); charts.forEach(f => f()); });
+</script>
+</body>
+</html>

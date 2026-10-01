@@ -1,0 +1,8 @@
+name: exp_c_reproduction
+seed: 42
+ticks: 1500
+description: "Experiment C - random founders, reproduction + mutation, moderate food (selection)"
+hypothesis: "Differential reproduction shifts trait means consistently across seeds."
+resources: {initial_count: 150, regeneration_rate: 0.015}
+evolution: {mutation_enabled: true, mutation_rate: 0.05, mutation_strength: 0.1}
+brain: {type: rule}

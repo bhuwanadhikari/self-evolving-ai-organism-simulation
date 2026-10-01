@@ -1,0 +1,7 @@
+name: env2_limited
+seed: 42
+ticks: 1000
+description: "Env 2 - limited resources; competition for food begins"
+hypothesis: "Population settles at a food-limited carrying capacity well below the cap; traits that reduce waste are favoured."
+resources: {initial_count: 120, regeneration_rate: 0.012}
+brain: {type: rule}

@@ -1,0 +1,9 @@
+name: exp_b_mutation
+seed: 42
+ticks: 1000
+description: "Experiment B - identical founders, mutation on, abundant food (weak selection)"
+hypothesis: "Genome diversity rises from zero through mutation; with weak selection trait means drift without clear direction."
+population: {initial_genome: fixed, fixed_genome: {}}
+resources: {initial_count: 400, regeneration_rate: 0.05}
+evolution: {mutation_enabled: true, mutation_rate: 0.1, mutation_strength: 0.1}
+brain: {type: rule}
